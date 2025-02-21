@@ -1,19 +1,18 @@
 import random
-import nltk
+import json
 from chatbot.nlp_utils import preprocess_text
+from difflib import get_close_matches
 
-responses = {
-    "greeting": ["Hello!", "Hi there!", "Hey!"],
-    "goodbye": ["Goodbye!", "See you later!", "Bye!"],
-    "default": ["I'm not sure how to respond to that. Can you rephrase?"]
-}
+# Load intents from the JSON file
+with open('chatbot/intents.json') as file:
+    intents = json.load(file)
 
 def get_response(user_input):
-    user_input = preprocess_text(user_input)
+    user_tokens = set(preprocess_text(user_input).split())
 
-    if "hello" in user_input or 'hi' in user_input:
-        return random.choice(responses["greeting"])
-    elif "bye" in user_input or 'goodbye' in user_input:
-        return random.choice(responses['goodbye'])
-    else:
-        return random.choice(responses["default"])
+    for intent in intents['intents']:
+        for pattern in intent['patterns']:
+            pattern_tokens = set(pattern.lower().split())
+            if user_tokens.intersection(pattern_tokens):
+                return random.choice(intent['responses'])
+    return "I'm not sure how to respond to that. Can you rephrase?"
